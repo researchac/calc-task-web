@@ -13,13 +13,6 @@
     href="./jspsych/dist/jspsych.css"
   >
 
-  <!-- jsPsych本体 -->
-  <script src="./jspsych/dist/jspsych.js"></script>
-
-  <!-- 使用するプラグイン -->
-  <script src="./jspsych/dist/plugin-html-button-response.js"></script>
-  <script src="./jspsych/dist/plugin-survey-html-form.js"></script>
-
 </head>
 
 <body>
@@ -27,10 +20,33 @@
   <!-- jsPsychの表示領域 -->
   <div id="display_stage"></div>
 
+  <!-- ローカルテスト用の参加者ID -->
+  <script>
+    window.CALC_PARTICIPANT_ID = "LOCAL_TEST";
+  </script>
+
+  <!-- jsPsych本体 -->
+  <script src="./jspsych/dist/jspsych.js"></script>
+
+  <!-- 使用するプラグイン -->
+  <script src="./jspsych/dist/plugin-html-button-response.js"></script>
+
+  <!-- ファイル1：課題説明・練習試行 -->
+  <script src="./main_study/file1_explanation_practice.js"></script>
+
   <script>
 
-    // ローカルテスト用の参加者ID
-    window.CALC_PARTICIPANT_ID = "LOCAL_TEST";
+    // jsPsychが読み込まれているか確認
+    if (typeof initJsPsych !== "function") {
+      throw new Error("jsPsych本体を読み込めませんでした。");
+    }
+
+    // ファイル1のタイムラインが読み込まれているか確認
+    if (!Array.isArray(window.calcTaskTimeline)) {
+      throw new Error(
+        "calcTaskTimelineが見つかりません。ファイル1の読み込みを確認してください。"
+      );
+    }
 
     // jsPsychを初期化する
     window.jsPsych = initJsPsych({
@@ -38,26 +54,21 @@
       display_element: document.getElementById("display_stage"),
 
       // 課題終了後の処理
-      on_finish: function () {
+      on_finish: function (data) {
 
-        // main.jsからデータを取得する
-        var result = window.calcTaskExport();
+        // jsPsychのデータを取得
+        var result = data.values();
 
-        // コンソールに出力する
-        console.log("計算課題の出力データ");
+        // コンソールに出力
+        console.log("ファイル1の出力データ");
         console.log(result);
 
         console.log(
-          "本番問題数:",
-          result.main_trials.length
+          "記録された試行数:",
+          result.length
         );
 
-        console.log(
-          "集計結果:",
-          result.summary
-        );
-
-        // 画面にも結果を表示する
+        // 画面にも結果を表示
         var output = document.createElement("pre");
 
         output.style.whiteSpace = "pre-wrap";
@@ -69,20 +80,14 @@
 
         output.textContent = JSON.stringify(result, null, 2);
 
-        document.body.appendChild(output);
+        document.getElementById("display_stage").appendChild(output);
       }
     });
 
-  </script>
-
-  <!-- 計算課題本体 -->
-  <script src="./main.js"></script>
-
-  <!-- 課題を開始する -->
-  <script>
+    // ファイル1の課題を開始する
     window.jsPsych.run(window.calcTaskTimeline);
+
   </script>
 
 </body>
-
 </html>
