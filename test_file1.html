@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>本調査・ファイル1 動作確認</title>
+
+  <link
+    rel="stylesheet"
+    href="./jspsych/dist/jspsych.css"
+  >
+</head>
+
+<body>
+
+  <div id="display_stage"></div>
+
+  <script>
+    window.CALC_PARTICIPANT_ID = "LOCAL_TEST";
+  </script>
+
+  <!-- jsPsych本体 -->
+  <script src="./jspsych/dist/jspsych.js"></script>
+
+  <!-- ファイル1で使用するプラグイン -->
+  <script src="./jspsych/dist/plugin-html-button-response.js"></script>
+
+  <!-- 本調査・ファイル1 -->
+  <script src="./main_study/file1_explanation_practice.js"></script>
+
+  <script>
+
+    // ファイル1のタイムラインが読み込まれたか確認
+    if (!Array.isArray(window.calcTaskTimeline)) {
+      throw new Error(
+        "calcTaskTimelineが見つかりません。ファイル1の読み込みを確認してください。"
+      );
+    }
+
+    // jsPsychを初期化
+    window.jsPsych = initJsPsych({
+
+      display_element: document.getElementById("display_stage"),
+
+      on_finish: function(data) {
+
+        // 試行データを取得
+        var result = data.values();
+
+        console.log("本調査・ファイル1の出力データ");
+        console.log(result);
+
+        // 結果を画面に表示
+        var output = document.createElement("pre");
+
+        output.style.whiteSpace = "pre-wrap";
+        output.style.textAlign = "left";
+        output.style.margin = "30px auto";
+        output.style.padding = "20px";
+        output.style.maxWidth = "900px";
+        output.style.overflowWrap = "anywhere";
+
+        output.textContent = JSON.stringify(result, null, 2);
+
+        document.getElementById("display_stage").appendChild(output);
+      }
+    });
+
+    // ファイル1を実行
+    window.jsPsych.run(window.calcTaskTimeline);
+
+  </script>
+
+</body>
+</html>
