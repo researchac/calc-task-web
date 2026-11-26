@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>計算課題・動作確認</title>
+
+  <!-- jsPsychのCSS -->
+  <link
+    rel="stylesheet"
+    href="./jspsych/dist/jspsych.css"
+  >
+
+  <!-- jsPsych本体 -->
+  <script src="./jspsych/dist/jspsych.js"></script>
+
+  <!-- 使用するプラグイン -->
+  <script src="./jspsych/dist/plugin-html-button-response.js"></script>
+  <script src="./jspsych/dist/plugin-survey-html-form.js"></script>
+
+</head>
+
+<body>
+
+  <!-- jsPsychの表示領域 -->
+  <div id="display_stage"></div>
+
+  <script>
+
+    // ローカルテスト用の参加者ID
+    window.CALC_PARTICIPANT_ID = "LOCAL_TEST";
+
+    // jsPsychを初期化する
+    window.jsPsych = initJsPsych({
+
+      display_element: document.getElementById("display_stage"),
+
+      // 課題終了後の処理
+      on_finish: function () {
+
+        // main.jsからデータを取得する
+        var result = window.calcTaskExport();
+
+        // コンソールに出力する
+        console.log("計算課題の出力データ");
+        console.log(result);
+
+        console.log(
+          "本番問題数:",
+          result.main_trials.length
+        );
+
+        console.log(
+          "集計結果:",
+          result.summary
+        );
+
+        // 画面にも結果を表示する
+        var output = document.createElement("pre");
+
+        output.style.whiteSpace = "pre-wrap";
+        output.style.textAlign = "left";
+        output.style.margin = "30px auto";
+        output.style.padding = "20px";
+        output.style.maxWidth = "900px";
+        output.style.overflowWrap = "anywhere";
+
+        output.textContent = JSON.stringify(result, null, 2);
+
+        document.body.appendChild(output);
+      }
+    });
+
+  </script>
+
+  <!-- 計算課題本体 -->
+  <script src="./main.js"></script>
+
+  <!-- 課題を開始する -->
+  <script>
+    window.jsPsych.run(window.calcTaskTimeline);
+  </script>
+
+</body>
+
+</html>
