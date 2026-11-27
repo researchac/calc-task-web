@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>本番計算課題テスト</title>
+
+  <!-- jsPsych CSS -->
+  <link
+    rel="stylesheet"
+    href="./jspsych/dist/jspsych.css"
+  >
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background: #ffffff;
+    }
+
+    #display_stage {
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    #test-result {
+      display: none;
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    #test-result pre {
+      padding: 16px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    #test-error {
+      display: none;
+      margin: 20px;
+      padding: 20px;
+      color: #a00000;
+      background: #fff0f0;
+      border: 1px solid #cc7777;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- jsPsychの表示場所 -->
+  <div id="display_stage"></div>
+
+  <!-- エラー表示 -->
+  <div id="test-error"></div>
+
+  <!-- 課題終了後のデータ確認 -->
+  <div id="test-result">
+    <h2>本番計算課題テスト終了</h2>
+
+    <p>
+      以下は、課題終了時に出力されたデータです。
+      Qualtricsへの保存ではなく、GitHub単独テスト用の表示です。
+    </p>
+
+    <h3>データ概要</h3>
+    <pre id="test-summary"></pre>
+
+    <h3>出力データ（JSON）</h3>
+    <pre id="test-json"></pre>
+
+    <button id="download-json">
+      JSONデータをダウンロード
+    </button>
+  </div>
+
+
+  <!-- =====================================================
+       1. jsPsych本体
+       ===================================================== -->
+
+  <script src="./jspsych/dist/jspsych.js"></script>
+
+
+  <!-- =====================================================
+       2. 必要なプラグイン
+       ===================================================== -->
+
+  <script src="./jspsych/dist/plugin-html-button-response.js"></script>
+
+  <script src="./jspsych/dist/plugin-survey-html-form.js"></script>
+
+
+  <!-- =====================================================
+       3. テスト実行コード
+       ===================================================== -->
+
+  <script>
+  (function () {
+
+    "use strict";
+
+
+    // =====================================================
+    // A. テスト条件
+    // =====================================================
+
+    // promotion または prevention
+    window.CALC_CONDITION = "prevention";
+
+    // テスト用参加者ID
+    window.CALC_PARTICIPANT_ID = "LOCAL_TEST";
+
+
+    // =====================================================
+    // B. エラー表示関数
+    // =====================================================
+
+    function showTestError(error) {
+
+      console.error(
+        "[本番課題テストエラー]",
+        error
+      );
+
+      var errorBox =
+        document.getElementById("test-error");
+
+      errorBox.style.display = "block";
+
+      errorBox.textContent =
+        "本番計算課題の読み込みまたは実行に失敗しました。\n\n" +
+        "エラー内容：\n" +
+        (
+          error && error.stack
+            ? error.stack
+            : String(error)
+        );
+
+    }
+
+
+    // =====================================================
+    // C. jsPsychの存在確認
+    // =====================================================
+
+    try {
+
+      if (
+        typeof window.initJsPsych !== "function"
+      ) {
+
+        throw new Error(
+          "jsPsych本体が読み込まれていません。"
+        );
+
+      }
+
+
+      if (
+        typeof window.jsPsychHtmlButtonResponse
+        !== "function"
+      ) {
+
+        throw new Error(
+          "HTML Button Responseプラグインが読み込まれていません。"
+        );
+
+      }
+
+
+      if (
+        typeof window.jsPsychSurveyHtmlForm
+        !== "function"
+      ) {
+
+        throw new Error(
+          "Survey HTML Formプラグインが読み込まれていません。"
+        );
+
+      }
+
+
+      // ===================================================
+      // D. jsPsychの初期化
+      // ===================================================
+
+      window.jsPsych = window.initJsPsych({
+
+        display_element:
+          document.getElementById("display_stage"),
+
+        on_finish: function () {
+
+          // -----------------------------------------------
+          // 課題データを取得
+          // -----------------------------------------------
+
+          try {
+
+            if (
+              typeof window.calcTaskExport
+              !== "function"
+            ) {
+
+              throw new Error(
+                "calcTaskExportが見つかりません。"
+              );
+
+            }
+
+
+            var exportData =
+              window.calcTaskExport();
+
+
+            var jsonData =
+              JSON.stringify(
+                exportData,
+                null,
+                2
+              );
+
+
+            // -----------------------------------------------
+            // データ概要を表示
+            // -----------------------------------------------
+
+            var summary =
+              exportData.summary || {};
+
+
+            document.getElementById(
+              "test-summary"
+            ).textContent = JSON.stringify(
+
+              {
+
+                condition:
+                  exportData.condition,
+
+                participant_id:
+                  exportData.participant_id,
+
+                total_questions:
+                  exportData.total_questions,
+
+                planned_question_order:
+                  exportData.planned_question_order,
+
+                presented_question_count:
+                  summary.presented_question_count,
+
+                not_presented_question_count:
+                  summary.not_presented_question_count,
+
+                countable_question_count:
+                  summary.countable_question_count,
+
+                skipped_question_count:
+                  summary.skipped_question_count,
+
+                incomplete_response_count:
+                  summary.incomplete_response_count,
+
+                time_limit_reached:
+                  summary.time_limit_reached,
+
+                scoring_status:
+                  exportData.scoring_status
+
+              },
+
+              null,
+
+              2
+
+            );
+
+
+            document.getElementById(
+              "test-json"
+            ).textContent = jsonData;
+
+
+            // -----------------------------------------------
+            // ダウンロード機能
+            // -----------------------------------------------
+
+            document.getElementById(
+              "download-json"
+            ).onclick = function () {
+
+              var blob = new Blob(
+
+                [jsonData],
+
+                {
+                  type: "application/json"
+                }
+
+              );
+
+
+              var url =
+                URL.createObjectURL(blob);
+
+
+              var link =
+                document.createElement("a");
+
+
+              link.href = url;
+
+              link.download =
+                "calc_task_test_data.json";
+
+
+              link.click();
+
+
+              URL.revokeObjectURL(url);
+
+            };
+
+
+            // -----------------------------------------------
+            // 結果画面を表示
+            // -----------------------------------------------
+
+            document.getElementById(
+              "test-result"
+            ).style.display = "block";
+
+
+            window.scrollTo({
+
+              top:
+                document.getElementById(
+                  "test-result"
+                ).offsetTop,
+
+              behavior: "smooth"
+
+            });
+
+
+            console.log(
+              "[本番課題テスト] データ出力成功",
+              exportData
+            );
+
+
+          } catch (error) {
+
+            showTestError(error);
+
+          }
+
+        }
+
+      });
+
+
+      // ===================================================
+      // E. 説明ページを読み込む
+      // ===================================================
+
+      var instructionScript =
+        document.createElement("script");
+
+      instructionScript.src =
+        "./main_study/instruction_page.js";
+
+
+      instructionScript.onload = function () {
+
+        console.log(
+          "[本番課題テスト] instruction_page.js 読み込み成功"
+        );
+
+
+        // =================================================
+        // F. 本番計算課題を読み込む
+        // =================================================
+
+        var mainTaskScript =
+          document.createElement("script");
+
+
+        mainTaskScript.src =
+          "./main_study/main_task.js";
+
+
+        mainTaskScript.onload = function () {
+
+          console.log(
+            "[本番課題テスト] main_task.js 読み込み成功"
+          );
+
+
+          // -----------------------------------------------
+          // タイムラインの確認
+          // -----------------------------------------------
+
+          if (
+            !Array.isArray(
+              window.calcTaskTimeline
+            )
+          ) {
+
+            throw new Error(
+              "calcTaskTimelineが定義されていません。"
+            );
+
+          }
+
+
+          if (
+            typeof window.calcTaskExport
+            !== "function"
+          ) {
+
+            throw new Error(
+              "calcTaskExportが定義されていません。"
+            );
+
+          }
+
+
+          console.log(
+            "[本番課題テスト] タイムライン確認成功"
+          );
+
+
+          // -----------------------------------------------
+          // 本番計算課題を実行
+          // -----------------------------------------------
+
+          window.jsPsych.run(
+            window.calcTaskTimeline
+          );
+
+        };
+
+
+        mainTaskScript.onerror = function () {
+
+          showTestError(
+
+            new Error(
+              "main_task.jsの読み込みに失敗しました。"
+            )
+
+          );
+
+        };
+
+
+        document.body.appendChild(
+          mainTaskScript
+        );
+
+      };
+
+
+      instructionScript.onerror = function () {
+
+        showTestError(
+
+          new Error(
+            "instruction_page.jsの読み込みに失敗しました。"
+          )
+
+        );
+
+      };
+
+
+      document.body.appendChild(
+        instructionScript
+      );
+
+
+    } catch (error) {
+
+      showTestError(error);
+
+    }
+
+  })();
+  </script>
+
+</body>
+</html>
